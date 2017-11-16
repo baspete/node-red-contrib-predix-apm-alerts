@@ -1,7 +1,7 @@
 {
-  "name": "node-red-contrib-predix-ts",
-  "version": "1.0.2",
-  "description": "Node-RED nodes for reading and writing to GE's Predix Timeseries",
+  "name": "node-red-contrib-predix-apm-alerts",
+  "version": "1.0.0",
+  "description": "Node-RED nodes for creating alerts in GE's Predix APM",
   "author": {
     "name": "Pete Butler"
   },
@@ -14,16 +14,17 @@
   "keywords": [
     "node-red",
     "predix",
-    "timeseries"
+    "apm",
+    "alerts"
   ],
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/baspete/node-red-contrib-predix-ts.git"
+    "url": "git+https://github.com/baspete/node-red-contrib-predix-apm-alerts.git"
   },
   "node-red": {
     "nodes": {
-      "predix-ts": "predix-timeseries.js"
+      "predix-apm-alerts": "predix-apm-alerts.js"
     }
   },
   "maintainers": [
