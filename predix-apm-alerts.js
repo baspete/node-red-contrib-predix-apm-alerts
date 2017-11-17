@@ -73,16 +73,13 @@ module.exports = function(RED){
       params.json = true;
       params.headers = {
         'Authorization': `Bearer ${node.accessToken}`,
-        'tenant': '598b0ad5-1241-4422-b9c5-36bb38161949',
-        'Content-Type': 'application/json'
+        'tenant': '598b0ad5-1241-4422-b9c5-36bb38161949'
       }
       params.url = `${node.baseUrl}/v1/jobs`;
       if(params.method === 'GET'){
-        url += `/v1/jobs/${params.uuid}/status`;
+        params.url += `/${params.uuid}/status`; // get the status of a particular job
         delete params.data;
-        delete params.headers['Content-Type'];
       }
-
       return new Promise((resolve, reject) => {
         request(params, (err, response, body) => {
           if(err){
@@ -126,8 +123,7 @@ module.exports = function(RED){
     // Handle data input
     node.on('input', function(msg){
       if(node.accessToken){
-        let data;
-
+        let data, params;
         // Sanity Check
         if (msg.payload && msg.payload.taskList){
           try {
@@ -137,20 +133,25 @@ module.exports = function(RED){
             return;
           }
         }
-
         // Send the payload to the alerts service
-        let params = {
-          method: 'POST',
-          body: data
-        };
+        params = { method: 'POST', body: data };
         callAlertsService(node, params).then((response) => {
           node.emit('alertsStaged', response);
-          const uuid = response.body.uuid;
-          node.send({payload:uuid});
+          // Monitor for alerts created
+          params = { method: 'GET', uuid: response.body.uuid }
+          let id = setInterval(check, 500);
+          function check() {
+            callAlertsService(node, params).then((response) => {
+              if(response.body.taskStatusList[0].status === 'COMPLETE'){
+                clearInterval(id);
+                node.emit('alertsCreated', response);
+                node.send({payload: response.body});
+              }
+            });
+          }
         }).catch((err) => {
           node.send({payload:err});
         });
-
       } else {
         console.log('No access token, no alerts for you!')
       }
