@@ -1,178 +1,80 @@
 <script type="text/javascript">
-  RED.nodes.registerType('predix-ts-client',{
+  RED.nodes.registerType('predix-apm-alerts',{
     category: 'config',
     defaults: {
-      name: { value:""},
-      queryUrlPrefix: {value:"https://time-series-store-predix.run.aws-usw02-pr.ice.predix.io/v1/"},
-      wsUrl: {value:"wss://gateway-predix-data-services.run.aws-usw02-pr.ice.predix.io/v1/stream/messages"},
-      UAAurl: { value:""},
-      predixZoneId: { value:"",required:true}
+      name: { value:""}
     },
     credentials:{
       clientID:{type:"text"},
-      clientSecret: { type:"password"},
-      userID:{type:"text"},
-      userSecret:{type:"password"}
+      username:{type:"text"},
+      password:{type:"text"}
     },
     inputs:0,
     outputs:0,
     label: function() {
-      return this.name || this.UAAurl;
+      return this.name;
     },
     oneditprepare: function() { }
-});
-</script>
-
-<script type="text/javascript">
-  RED.nodes.registerType('predix-ts-ingest',{
-    category: 'storage',
-    color: '#ebf7fb',
-    defaults: {
-      name: { value:""},
-      server:{type:"predix-ts-client", required:true},
-      socketTimeout:{value:"60", required:true}
-    },
-    icon: "logo.png",
-    align: "right",
-    paletteLabel:"Predix TS",
-    inputs:1,
-    outputs:0,
-    label: function() {
-      return this.name||"timeseries ingest";
-    }
   });
 </script>
 
 <script type="text/javascript">
-  RED.nodes.registerType('predix-ts-query',{
-    category: 'storage',
+  RED.nodes.registerType('predix-apm-alerts-ingest',{
+    category: 'predix',
     color: '#ebf7fb',
     defaults: {
-      name: { value:""},
-      server:{type:"predix-ts-client", required:true},
-      queryType:{value:"",required:true}
+      name: { value:'APM Alerts Ingestion'},
+      server:{type:'predix-apm-alerts', required:true}
     },
-    icon: "logo.png",
-    align: "left",
-    paletteLabel:"Predix TS",
+    icon: 'logo.png',
+    align: 'right',
+    paletteLabel:'APM Alerts',
     inputs:1,
     outputs:1,
     label: function() {
-      return this.name||"timeseries query";
+      return this.name;
     }
   });
 </script>
 
-<script type="text/x-red" data-template-name="predix-ts-client">
+<script type="text/x-red" data-template-name="predix-apm-alerts">
   <div class="form-row">
     <label for="node-config-input-name"><i class="icon-tag"></i> Name</label>
     <input type="text" id="node-config-input-name" placeholder="Name">
   </div>
   <div class="form-row">
-    <label for="node-config-input-queryUrlPrefix"><i class="icon-globe"></i> Predix Service Url</label>
-    <input type="text" id="node-config-input-queryUrlPrefix" placeholder="Predix Service Url">
+    <label for="node-config-input-clientId"><i class="icon-user"></i> Client ID</label>
+    <input type="text" id="node-config-input-clientId" placeholder="App Client ID">
   </div>
   <div class="form-row">
-    <label for="node-config-input-wsUrl"><i class="icon-globe"></i> WS URL</label>
-    <input type="text" id="node-config-input-wsUrl" placeholder="WS URL">
+    <label for="node-config-input-tenantId"><i class="icon-user"></i> Tenant UUID</label>
+    <input type="text" id="node-config-input-tenantId" placeholder="APM Tenant UUID">
   </div>
   <div class="form-row">
-    <label for="node-config-input-UAAurl"><i class="icon-globe"></i> UAA host url</label>
-    <input type="text" id="node-config-input-UAAurl" placeholder="UAA Host URL">
+    <label for="node-config-input-username"><i class="icon-lock"></i> Ingestion Username</label>
+    <input type="text" id="node-config-input-username" placeholder="Ingestion Username">
   </div>
   <div class="form-row">
-    <label for="node-config-input-clientID"><i class="icon-user"></i> Client ID</label>
-    <input type="text" id="node-config-input-clientID" placeholder="App Client ID">
-  </div>
-  <div class="form-row">
-    <label for="node-config-input-clientSecret"><i class="icon-lock"></i> Client secret</label>
-    <input type="password" id="node-config-input-clientSecret" placeholder="Client Secret">
-  </div>
-  <div class="form-row">
-    <label for="node-config-input-predixZoneId"><i class="icon-flag"></i> Predix-Zone-Id</label>
-    <input type="text" id="node-config-input-predixZoneId" placeholder="Predix Zone Id">
+    <label for="node-config-input-password"><i class="icon-lock"></i> Ingestion Password</label>
+    <input type="text" id="node-config-input-password" placeholder="Ingestion Password">
   </div>
 </script>
 
-<script type="text/x-red" data-template-name="predix-ts-ingest">
+<script type="text/x-red" data-template-name="predix-apm-alerts-ingest">
   <div class="form-row">
     <label for="node-input-name"><i class="icon-tag"></i>Name</label>
     <input type="text" id="node-input-name" placeholder="Name">
   </div>
   <div class="form-row">
-    <label for="node-input-server"><i class="fa fa-bookmark"></i> Timeseries Client</label>
+    <label for="node-input-server"><i class="fa fa-bookmark"></i> Alerts Server</label>
     <input type="text" id="node-input-server">
   </div>
-  <div class="form-row">
-    <label for="node-input-socketTimeout"><i class="fa fa-clock-o"></i> Socket Timeout</label>
-    <select type="text" id="node-input-socketTimeout" style="width: 70%;">
-      <option value="10" data-i18n="predix-timeseries.label.10seconds"></option>
-      <option value="60" data-i18n="predix-timeseries.label.1minute"></option>
-      <option value="300" data-i18n="predix-timeseries.label.5minutes"></option>
-    </select>
-  </div>
 </script>
 
-<script type="text/x-red" data-template-name="predix-ts-query">
-  <div class="form-row">
-    <label for="node-input-name"><i class="icon-tag"></i>Name</label>
-    <input type="text" id="node-input-name" placeholder="Name">
-  </div>
-  <div class="form-row">
-    <label for="node-input-server"><i class="fa fa-bookmark"></i> Timeseries Client</label>
-    <input type="text" id="node-input-server">
-  </div>
-  <div class="form-row">
-    <label for="node-input-queryType">Query type</label>
-    <select type="text" id="node-input-queryType" style="width: 70%;">
-      <option value="aggregations" data-i18n="predix-timeseries.label.aggregations"></option>
-      <option value="datapoints" data-i18n="predix-timeseries.label.datapoints"></option>
-      <option value="currentDatapoints" data-i18n="predix-timeseries.label.query-current"></option>
-      <option value="tags" data-i18n="predix-timeseries.label.tags"></option>
-    </select>
-  </div>
+<script type="text/x-red" data-help-name="predix-apm-alerts">
+  <p>TODO</p>
 </script>
 
-<script type="text/x-red" data-help-name="predix-ts-client">
-  <p>This sets up the timeseries client config.</p>
-  <p>
-    <ul>
-      <li><b>Name:</b> Enter a name for this client node</li>
-      <li><b>Predix Service Url:</b> Enter the Predix server URL, currently default to <code>https://time-series-store-predix.run.aws-usw02-pr.ice.predix.io/v1/</code></li>
-      <li><b>WS Url:</b> Enter the Predix server WS URL, currently default to <code>wss://gateway-predix-data-services.run.aws-usw02-pr.ice.predix.io/v1/stream/messages</code></li>
-      <li><b>UAA url:</b> Enter the host url for the UAA instance that is associated with the Predix Timeseries instance</li>
-      <li><b>Client ID:</b> Enter the app client ID that is associated with the Timeseries instance</li>
-      <li><b>Client secret:</b> Enter the client secret associated with the app client id</li>
-      <li><b>User ID:</b> Enter the user ID that has access to the Timeseries instance</li>
-      <li><b>User password:</b> Enter the password of the user that will be accessing the Timeseries instance</li>
-      <li><b>Predix-Zone-id:</b> Enter the Predix-Zone-idfor the app that is associated with the timeseries.
-    </ul>
-  </p>
-</script>
-
-<script type="text/x-red" data-help-name="predix-ts-ingest">
-  <p>This is the data ingest node that allows your to write data into the Predix Timeseries microservices via websocket.</p>
-  <p>The current default websocket endpoint is <code>wss://gateway-predix-data-services.run.aws-usw02-pr.ice.predix.io/v1/stream/messages </code> </p>
-  <p>To use the node, first add a new Time series client node to connect with Timeseries on Predix.</p>
-  <p> Users are expected to write data in the following fields:
-    <ul>
-      <li><code>msg.payload.messageId</code> is usually the timestamp of the message</li>
-      <li><code>msg.payload.body</code> includes three properties, they are:
-        <ul>
-          <li><code>name:</code> The tag name, e.g. "name": "Compressor-2015:CompressionRatio" </li>
-          <li><code>datapoints:</code> Array of datapoints. </li>
-          <li><code>attributes:</code> attributes of message</li>
-        </ul>
-      </li>
-    </ul>
-  </p>
-  <p>Note: please refer to the README file for detail structure of the input message.</p>
-</script>
-
-<script type="text/x-red" data-help-name="predix-ts-query">
-  <p>This is the data query node that allows your to query data from the Predix Timeseries microservices.</p>
-  <p>The current default API endpoint prefix is <code>https://time-series-store-predix.run.aws-usw02-pr.ice.predix.io/v1/ </code> </p>
-  <p>To use the node, first add a new Time series client node to connect with Timeseries on Predix.</p>
-  <p> Users are expected to query data in <code>msg.payload</code>.</p>
-  <p>Note: please refer to the README file for detail structure of the input message.</p>
+<script type="text/x-red" data-help-name="predix-apm-alerts-ingest">
+  <p>TODO</p>
 </script>
