@@ -12,6 +12,9 @@ module.exports = function(RED){
     RED.nodes.createNode(this,n);
     var node = this;
 
+    node.config = Object.assign({}, n, node.credentials);
+
+
     node.on('close', function(){
       /* nothing for now */
     });
@@ -19,8 +22,8 @@ module.exports = function(RED){
 
   RED.nodes.registerType('predix-apm-alerts', apmAlertsNode, {
     credentials: {
-      clientID:{type:'text'},
-      clientSecret: { type:'text'}
+      username:{type:'text'},
+      password: { type:'text'}
     }
   });
 
@@ -34,7 +37,6 @@ module.exports = function(RED){
     RED.nodes.createNode(this,config);
     let node = this;
     node.server = RED.nodes.getNode(config.server);
-    node.baseUrl = 'https://apm-gateway-svc-rc.int-app.aws-usw02-pr.predix.io';
 
     // Indicator
     if(node.server){
@@ -73,9 +75,9 @@ module.exports = function(RED){
       params.json = true;
       params.headers = {
         'Authorization': `Bearer ${node.accessToken}`,
-        'tenant': '598b0ad5-1241-4422-b9c5-36bb38161949'
+        'tenant': node.server.config.tenantId // Tenant UUID
       }
-      params.url = `${node.baseUrl}/v1/jobs`;
+      params.url = node.server.config.ingestionUrl;
       if(params.method === 'GET'){
         params.url += `/${params.uuid}/status`; // get the status of a particular job
         delete params.data;
@@ -100,14 +102,14 @@ module.exports = function(RED){
 
     // Get an ingest token on startup
     request.post({
-      url: 'https://d1730ade-7c0d-4652-8d44-cb563fcc1e27.predix-uaa.run.aws-usw02-pr.ice.predix.io/oauth/token',
+      url: node.server.config.uaaUrl,
       auth: {
-        'user': 'ingestor.496bb641-78b5-4a18-b1b7-fde29788db38.991e5c23-3e9c-4944-b08b-9e83ef0ab598' // ClientID
+        'user': node.server.config.clientId // ClientID
       },
       form: {
         'grant_type': 'password',
-        'username': '598b0ad5-1241-4422-b9c5-36bb38161949_ingestor', // Ingestion URL
-        'password': 'Bethany1' // Ingestion Password
+        'username': node.server.config.username, // Ingestor Username
+        'password': node.server.config.password // Ingestion Password
       }
     }, (err, response, body) => {
       if(err){
