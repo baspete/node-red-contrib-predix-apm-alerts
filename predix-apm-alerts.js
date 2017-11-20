@@ -58,6 +58,10 @@ module.exports = function(RED){
         node.log('Sending Alerts: ' + JSON.stringify(data));
         node.status({fill:'blue',shape:'circle',text:'Transmitting'});
       });
+      node.on('requestTimeout', (seconds) => {
+        node.log('No response after ' + seconds + ' seconds. Giving Up.');
+        node.status({fill:'red',shape:'dot',text:'Request Error'});
+      });
       node.on('alertsStaged', (response) => {
         node.log('Alerts Staged: ' + response.statusCode + ', ' + response.body.uuid);
         node.status({fill:'blue',shape:'dot',text:'Alerts Staged'});
@@ -142,21 +146,27 @@ module.exports = function(RED){
         params = { method: 'POST', body: data };
         node.emit('sendingAlerts', data);
         callAlertsService(node, params).then((response) => {
+          let retries = 10;
+          params = { method: 'GET', uuid: response.body.uuid }
           // Monitor for alerts created
           // NOTE: we're polling here because the alerts service doesn't generate an
           //       event when alerts have been ingested and created. When they implement
           //       an event-driven workflow this can get refactored.
-          params = { method: 'GET', uuid: response.body.uuid }
-          let id = setInterval(check, 500);
           function check() {
             callAlertsService(node, params).then((response) => {
               if(response.body.taskStatusList[0].status === 'COMPLETE'){
-                clearInterval(id);
                 node.emit('alertsCreated', response);
                 node.send({payload: response.body});
+              } else {
+                if(retries-- === 0){
+                  node.emit('requestTimeout', 5);
+                } else {
+                  setTimeout(check, 500);
+                }
               }
             });
           }
+          check();
         }).catch((err) => {
           node.send({payload:err});
         });
