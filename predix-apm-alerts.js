@@ -11,9 +11,7 @@ module.exports = function(RED){
 
     RED.nodes.createNode(this,n);
     var node = this;
-
     node.config = Object.assign({}, n, node.credentials);
-
 
     node.on('close', function(){
       /* nothing for now */
@@ -23,7 +21,7 @@ module.exports = function(RED){
   RED.nodes.registerType('predix-apm-alerts', apmAlertsNode, {
     credentials: {
       username:{type:'text'},
-      password: { type:'text'}
+      password: { type:'password'}
     }
   });
 
@@ -40,10 +38,12 @@ module.exports = function(RED){
 
     // Indicator
     if(node.server){
-      node.on('authenticated', () => {
+      node.on('authenticated', (response) => {
+        node.log('Authenticated');
         node.status({fill:'green',shape:'dot',text:'Authenticated'});
       });
-      node.on('unauthenticated', () => {
+      node.on('unauthenticated', (error) => {
+        node.error('Unuthenticated: ' + JSON.stringify(error));
         node.status({fill:'red',shape:'dot',text:'Unauthenticated'});
       });
       node.on('badPayload', (payload) => {
@@ -53,6 +53,10 @@ module.exports = function(RED){
       node.on('requestError', (error) => {
         node.error('Request Error: ' + error);
         node.status({fill:'red',shape:'dot',text:'Request Error'});
+      });
+      node.on('sendingAlerts', (data) => {
+        node.log('Sending Alerts: ' + JSON.stringify(data));
+        node.status({fill:'blue',shape:'circle',text:'Transmitting'});
       });
       node.on('alertsStaged', (response) => {
         node.log('Alerts Staged: ' + response.statusCode + ', ' + response.body.uuid);
@@ -90,7 +94,6 @@ module.exports = function(RED){
           } else if(response){
             if (response.statusCode < 200 || response.statusCode >= 300){
               node.emit('responseError', response);
-              console.log('response error', response.statusCode, response.body);
               reject(err);
             } else {
               resolve(response);
@@ -113,12 +116,11 @@ module.exports = function(RED){
       }
     }, (err, response, body) => {
       if(err){
-        console.log('token err', err);
         node.emit('unauthenticated', err);
       } else {
         const r = JSON.parse(body);
         node.accessToken = r.access_token;
-        node.emit('authenticated','');
+        node.emit('authenticated',r);
       }
     });
 
@@ -135,11 +137,15 @@ module.exports = function(RED){
             return;
           }
         }
+        console.log('sending', data);
         // Send the payload to the alerts service
         params = { method: 'POST', body: data };
+        node.emit('sendingAlerts', data);
         callAlertsService(node, params).then((response) => {
-          node.emit('alertsStaged', response);
           // Monitor for alerts created
+          // NOTE: we're polling here because the alerts service doesn't generate an
+          //       event when alerts have been ingested and created. When they implement
+          //       an event-driven workflow this can get refactored.
           params = { method: 'GET', uuid: response.body.uuid }
           let id = setInterval(check, 500);
           function check() {
@@ -155,7 +161,7 @@ module.exports = function(RED){
           node.send({payload:err});
         });
       } else {
-        console.log('No access token, no alerts for you!')
+        node.error('No access token, no alerts for you!')
       }
 
     });

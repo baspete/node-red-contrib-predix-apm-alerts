@@ -67,7 +67,7 @@
   </div>
   <div class="form-row">
     <label for="node-config-input-password"><i class="icon-lock"></i> Ingestion Password</label>
-    <input type="text" id="node-config-input-password" placeholder="Ingestion Password">
+    <input type="password" id="node-config-input-password" placeholder="Ingestion Password">
   </div>
 </script>
 
@@ -83,9 +83,25 @@
 </script>
 
 <script type="text/x-red" data-help-name="predix-apm-alerts">
-  <p>TODO</p>
+  <p>This allows you to create a configuration for ingesting data into the Predix APM Alerts service. You can find the values for the following fields by going to Setup > Ingestor in your APM instance.</p>
+  <ul>
+    <li><b>Name:</b> Enter a name for this client node. You can reuse this across node instances.</li>
+    <li><b>UAA URL:</b> This is the <code>Token Request URL</code></li>
+    <li><b>Client ID:</b> This is the <code>Client ID</code></li>
+    <li><b>Tenant UUID</b> This is the <code>Tenant UUID</code></li>
+    <li><b>Ingestion URL:</b> This is the <code>Alerts ingestion URL</code></li>
+    <li><b>Ingestion Username:</b> This is the <code>Username</code></li>
+    <li><b>Ingestion Password:</b> This is the <code>Password</code></li>
+  </ul>
+  </p>
+
 </script>
 
 <script type="text/x-red" data-help-name="predix-apm-alerts-ingest">
-  <p>TODO</p>
+  <p>This node allows you to ingest data into the Predix APM Alerts service. For detailed information about the message format to be passed to the service, refer to the <a href="https://apm-application-help-rc.int-app.aws-usw02-pr.predix.io/t_apm_ingestion_alerts_ingestion.html" target="_blank">APM Documentation</a>.</p>
+  <p>The following fields are used to configure this node:</p>
+  <ul>
+    <li><b>Name:</b> Enter a name for this node</li>
+    <li><b>Alerts Server:</b> Choose a configuration for ingesting alerts</li>
+  </ul>
 </script>
